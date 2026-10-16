@@ -5,6 +5,7 @@ export default function Reveal({
   delay = 0,
   y = 24,
   className,
+  id,
   as: Tag = 'div',
 }) {
   const reduce = useReducedMotion();
@@ -13,6 +14,7 @@ export default function Reveal({
   return (
     <MotionTag
       className={className}
+      id={id}
       initial={reduce ? false : { opacity: 0, y }}
       whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}

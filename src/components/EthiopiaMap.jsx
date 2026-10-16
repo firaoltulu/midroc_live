@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { feature } from 'topojson-client';
-import { geoMercator, geoPath } from 'd3-geo';
+import { geoContains, geoMercator, geoPath } from 'd3-geo';
 import rawTopo from '../data/ethiopia-regions.json';
 
 const fc = feature(rawTopo, rawTopo.objects.ETHADM1gbOpen);
@@ -13,10 +13,69 @@ const REGIONS = fc.features.map((f, i) => ({
   id: f.properties.shapeISO || `r${i}`,
   name: f.properties.shapeName,
   d: PATH(f),
+  pins: getRegionPins(f),
   index: i,
 }));
 
 const REGION_COUNT = REGIONS.length;
+
+function getRegionPins(region) {
+  const positions = [];
+  const collectPositions = (coordinates) => {
+    if (typeof coordinates[0] === 'number') {
+      positions.push(coordinates);
+      return;
+    }
+    coordinates.forEach(collectPositions);
+  };
+  collectPositions(region.geometry.coordinates);
+
+  const longitudes = positions.map(([longitude]) => longitude);
+  const latitudes = positions.map(([, latitude]) => latitude);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const divisions = 48;
+  const candidates = [];
+
+  for (let x = 0; x <= divisions; x += 1) {
+    for (let y = 0; y <= divisions; y += 1) {
+      const point = [
+        minLongitude + ((maxLongitude - minLongitude) * x) / divisions,
+        minLatitude + ((maxLatitude - minLatitude) * y) / divisions,
+      ];
+      if (geoContains(region, point)) candidates.push(PROJECTION(point));
+    }
+  }
+
+  const projectedBounds = positions.map((point) => PROJECTION(point));
+  const center = [
+    (Math.min(...projectedBounds.map(([x]) => x)) + Math.max(...projectedBounds.map(([x]) => x))) / 2,
+    (Math.min(...projectedBounds.map(([, y]) => y)) + Math.max(...projectedBounds.map(([, y]) => y))) / 2,
+  ];
+  const pins = [];
+
+  while (pins.length < 4 && candidates.length > 0) {
+    let bestIndex = 0;
+    let bestDistance = Number.NEGATIVE_INFINITY;
+
+    candidates.forEach(([x, y], candidateIndex) => {
+      const distance = pins.length === 0
+        ? (x - center[0]) ** 2 + (y - center[1]) ** 2
+        : Math.min(...pins.map(([pinX, pinY]) => (x - pinX) ** 2 + (y - pinY) ** 2));
+      const score = pins.length === 0 ? -distance : distance;
+      if (score > bestDistance) {
+        bestDistance = score;
+        bestIndex = candidateIndex;
+      }
+    });
+
+    pins.push(candidates.splice(bestIndex, 1)[0]);
+  }
+
+  return pins;
+}
 
 function readVar(name, fallback) {
   if (typeof window === 'undefined') return fallback;
@@ -111,6 +170,7 @@ export default function EthiopiaMap({ scrollProgress }) {
               <RegionPath
                 key={r.id}
                 d={r.d}
+                pins={r.pins}
                 name={r.name}
                 index={i}
                 total={REGION_COUNT}
@@ -129,7 +189,7 @@ export default function EthiopiaMap({ scrollProgress }) {
   );
 }
 
-function RegionPath({ d, name, index, total, scrollProgress, baseFill, litFill, strokeColor }) {
+function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, litFill, strokeColor }) {
   const reduce = useReducedMotion();
   const center = (index + 0.5) / total;
   const half = 1 / total;
@@ -152,20 +212,47 @@ function RegionPath({ d, name, index, total, scrollProgress, baseFill, litFill, 
     [inMin, mid, outMax],
     reduce ? [0.45, 0.45, 0.45] : [0.45, 0.85, 0.45]
   );
+  const activeStrokeOpacity = useTransform(
+    scrollProgress,
+    [inMin, mid, outMax],
+    reduce ? [0, 0, 0] : [0, 0.9, 0]
+  );
+  const pinOpacity = useTransform(
+    scrollProgress,
+    [inMin, mid, outMax],
+    reduce ? [0.65, 0.65, 0.65] : [0, 1, 0]
+  );
 
   return (
-    <motion.path
-      d={d}
-      style={{
-        fill,
-        opacity,
-        strokeOpacity,
-      }}
-      stroke={strokeColor}
-      strokeWidth={1.2}
-      strokeLinejoin="round"
-    >
-      <title>{name}</title>
-    </motion.path>
+    <>
+      <motion.path
+        d={d}
+        style={{
+          fill,
+          opacity,
+          strokeOpacity,
+        }}
+        stroke={strokeColor}
+        strokeWidth={1.2}
+        strokeLinejoin="round"
+      >
+        <title>{name}</title>
+      </motion.path>
+      <motion.path
+        d={d}
+        fill="none"
+        stroke="#b7f7a8"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+        style={{ strokeOpacity: activeStrokeOpacity }}
+        aria-hidden="true"
+      />
+      {pins.map(([x, y]) => (
+        <motion.g key={`${x}-${y}`} style={{ opacity: pinOpacity }} aria-hidden="true">
+          <circle cx={x} cy={y} r={7} fill="#b7f7a8" opacity={0.24} />
+          <circle cx={x} cy={y} r={3.2} fill="#d9ffd0" stroke="#b7f7a8" strokeWidth={1} />
+        </motion.g>
+      ))}
+    </>
   );
 }

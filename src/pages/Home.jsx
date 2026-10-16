@@ -140,7 +140,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <Reveal as="div">
+      <Reveal as="div" id="sectors-marquee">
         <div className="marquee" aria-hidden="true">
           <div className="marquee__track">
             {[...Array(2)].flatMap((_, i) =>
