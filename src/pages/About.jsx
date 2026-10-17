@@ -6,6 +6,29 @@ import Reveal from '../components/Reveal';
 const VALUE_ICONS = { Compass, Award, Shield, Sparkles };
 
 export default function About() {
+  const renderTimelineGroup = (duplicate = false) => (
+    <div
+      className="timeline__group"
+      role={duplicate ? undefined : 'list'}
+      aria-hidden={duplicate ? 'true' : undefined}
+    >
+      {TIMELINE.map((t) => (
+        <article
+          key={`${duplicate ? 'duplicate-' : ''}${t.year}`}
+          className="timeline__item"
+          role={duplicate ? undefined : 'listitem'}
+        >
+          <span className="timeline__marker" aria-hidden="true" />
+          <div className="timeline__card">
+            <span className="timeline__year">{t.year}</span>
+            <h3 className="timeline__title">{t.title}</h3>
+            <p className="timeline__desc">{t.desc}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <section className="about-hero">
@@ -105,14 +128,11 @@ export default function About() {
           </div>
 
           <Reveal>
-            <div className="timeline">
-              {TIMELINE.map((t) => (
-                <div key={t.year} className="timeline__item">
-                  <span className="timeline__year">{t.year}</span>
-                  <h3 className="timeline__title">{t.title}</h3>
-                  <p className="timeline__desc">{t.desc}</p>
-                </div>
-              ))}
+            <div className="timeline" role="region" aria-label="Midroc milestones" tabIndex={0}>
+              <div className="timeline__track">
+                {renderTimelineGroup()}
+                {renderTimelineGroup(true)}
+              </div>
             </div>
           </Reveal>
         </div>

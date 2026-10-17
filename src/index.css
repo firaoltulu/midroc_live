@@ -155,7 +155,7 @@ p  { color: var(--ink-1); }
   margin-inline: auto;
   padding-inline: clamp(20px, 5vw, 48px);
 }
-.section { padding-block: clamp(64px, 12vw, 160px); }
+.section { padding-block: clamp(64px, 12vw, 16px); }
 .section--tight { padding-block: clamp(48px, 8vw, 96px); }
 
 .btn {

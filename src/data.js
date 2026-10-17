@@ -206,7 +206,7 @@ export const TIMELINE = [
   { year: '2018', title: 'A unified group identity', desc: 'Six sectors, one brand — Midroc re-launched across the continent.' },
   { year: '2019', title: 'E-Commerce launched', desc: 'Queens goes live, beginning a transformation of the consumer business.' },
   { year: '2023', title: 'Margin of Moha Beverage', desc: 'Margining of the Moha Beverage with the Group.' },
-  // { year: '2026', title: 'A unified group identity', desc: 'Six sectors, one brand — Midroc re-launched across the continent.' },
+  { year: '2026', title: 'A unified group identity', desc: 'Six sectors, one brand — Midroc re-launched across the continent.' },
 ];
 
 export const VALUES = [
