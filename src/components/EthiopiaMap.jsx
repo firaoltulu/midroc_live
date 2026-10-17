@@ -102,9 +102,41 @@ export default function EthiopiaMap({ scrollProgress }) {
     return () => obs.disconnect();
   }, [baseFill, litFill, strokeColor]);
 
-  const parallaxY = useTransform(scrollProgress, [0, 1], reduce ? [0, 0] : [-40, 120]);
-  const parallaxScale = useTransform(scrollProgress, [0, 0.4, 1], reduce ? [1, 1, 1] : [1, 1.06, 1.12]);
-  const overallOpacity = useTransform(scrollProgress, [0, 0.85, 1], reduce ? [0.72, 0.72, 0.72] : [0.72, 0.6, 0.45]);
+  const mapX = useTransform(
+    scrollProgress,
+    [0, 0.18, 0.38, 0.6, 0.82, 1],
+    reduce ? ['22vw', '22vw', '22vw', '22vw', '22vw', '22vw'] : ['24vw', '-23vw', '26vw', '-25vw', '21vw', '-8vw']
+  );
+  const mapY = useTransform(
+    scrollProgress,
+    [0, 0.18, 0.38, 0.6, 0.82, 1],
+    reduce ? ['-2vh', '-2vh', '-2vh', '-2vh', '-2vh', '-2vh'] : ['-7vh', '11vh', '-9vh', '8vh', '-12vh', '2vh']
+  );
+  const mapScale = useTransform(
+    scrollProgress,
+    [0, 0.18, 0.38, 0.6, 0.82, 1],
+    reduce ? [0.68, 0.68, 0.68, 0.68, 0.68, 0.68] : [0.72, 0.48, 0.7, 0.5, 0.66, 0.46]
+  );
+  const mapRotateX = useTransform(
+    scrollProgress,
+    [0, 0.25, 0.5, 0.75, 1],
+    reduce ? [12, 12, 12, 12, 12] : [16, 9, 18, 10, 14]
+  );
+  const mapRotateY = useTransform(
+    scrollProgress,
+    [0, 0.25, 0.5, 0.75, 1],
+    reduce ? [-12, -12, -12, -12, -12] : [-18, 14, -12, 17, -8]
+  );
+  const mapRotateZ = useTransform(
+    scrollProgress,
+    [0, 0.25, 0.5, 0.75, 1],
+    reduce ? [-5, -5, -5, -5, -5] : [-7, 5, -4, 6, -3]
+  );
+  const overallOpacity = useTransform(
+    scrollProgress,
+    [0, 0.18, 0.38, 0.6, 0.82, 1],
+    reduce ? [0.55, 0.55, 0.55, 0.55, 0.55, 0.55] : [0.58, 0.4, 0.52, 0.38, 0.5, 0.34]
+  );
 
   return (
     <div
@@ -129,8 +161,12 @@ export default function EthiopiaMap({ scrollProgress }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          y: parallaxY,
-          scale: parallaxScale,
+          x: mapX,
+          y: mapY,
+          scale: mapScale,
+          rotateX: mapRotateX,
+          rotateY: mapRotateY,
+          rotateZ: mapRotateZ,
           opacity: overallOpacity,
         }}
       >
@@ -138,9 +174,9 @@ export default function EthiopiaMap({ scrollProgress }) {
           style={{
             width: 'min(1100px, 95vw)',
             aspectRatio: '1000 / 720',
-            transform: reduce ? 'none' : 'rotateX(10deg) rotateY(-3deg)',
+            transform: 'translateZ(18px)',
             transformStyle: 'preserve-3d',
-            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.45))',
+            filter: 'drop-shadow(0 10px 0 rgba(35,87,44,0.45)) drop-shadow(0 30px 60px rgba(0,0,0,0.45))',
           }}
         >
           <svg
