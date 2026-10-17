@@ -65,7 +65,7 @@ export default function Home() {
           >
             <span className="hero__badge">
               <span className="hero__badge-dot" />
-              v1 2026 · Group results published
+              v1 2026 · MIDROC Investment Group
             </span>
           </motion.div>
 
@@ -100,6 +100,7 @@ export default function Home() {
 
           <motion.div
             className="hero__meta"
+            id="counter"
             style={{ opacity: heroOpacity }}
           >
             <div className="hero__meta-stat">
