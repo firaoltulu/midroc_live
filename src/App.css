@@ -175,6 +175,77 @@
   background: transparent;
 }
 
+.eth-map {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.eth-map::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+:root:not([data-theme="light"]) .eth-map::before {
+  background: radial-gradient(
+    ellipse min(68vw, 820px) min(58vh, 520px) at 50% 50%,
+    rgba(47, 125, 65, 0.3) 0%,
+    rgba(35, 87, 44, 0.18) 42%,
+    transparent 78%
+  );
+}
+:root[data-theme="light"] .eth-map::before {
+  background: radial-gradient(
+    ellipse min(68vw, 820px) min(58vh, 520px) at 50% 50%,
+    rgba(47, 107, 58, 0.2) 0%,
+    rgba(47, 107, 58, 0.11) 42%,
+    transparent 78%
+  );
+}
+.eth-map__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
+  opacity: 0.3;
+}
+.eth-map__art {
+  width: min(1320px, 100vw, 150svh);
+  aspect-ratio: 1000 / 720;
+  flex: none;
+  transform: translateZ(18px);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 14px 0 rgba(35,87,44,0.42)) drop-shadow(0 36px 64px rgba(0,0,0,0.38));
+}
+.site-main,
+.footer {
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 767px) {
+  :root:not([data-theme="light"]) .eth-map::before {
+    background: radial-gradient(
+      ellipse min(100vw, 420px) min(48vh, 360px) at 50% 50%,
+      rgba(47, 125, 65, 0.25) 0%,
+      rgba(35, 87, 44, 0.14) 45%,
+      transparent 80%
+    );
+  }
+  :root[data-theme="light"] .eth-map::before {
+    background: radial-gradient(
+      ellipse min(100vw, 420px) min(48vh, 360px) at 50% 50%,
+      rgba(47, 107, 58, 0.17) 0%,
+      rgba(47, 107, 58, 0.09) 45%,
+      transparent 80%
+    );
+  }
+}
+
 .hero {
   position: relative;
   min-height: 100svh;
@@ -298,6 +369,18 @@
 }
 @media (min-width: 768px) {
   .hero__meta { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 767px) {
+  .eth-map__stage {
+    opacity: 0.2;
+  }
+  .eth-map__art {
+    width: min(108vw, 150svh);
+    transform: translateZ(12px);
+  }
+}
+@media (max-width: 420px) {
+  .eth-map__stage { opacity: 0.18; }
 }
 
 /* ---------- MARQUEE ---------- */

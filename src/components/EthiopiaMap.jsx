@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { feature } from 'topojson-client';
 import { geoContains, geoMercator, geoPath } from 'd3-geo';
@@ -84,8 +85,6 @@ function readVar(name, fallback) {
 }
 
 export default function EthiopiaMap({ scrollProgress }) {
-  const reduce = useReducedMotion();
-
   const baseFill = useMotionValue(readVar('--green-700', '#23572c'));
   const litFill = useMotionValue(readVar('--gold-300', '#e6c878'));
   const strokeColor = useMotionValue(readVar('--line-strong', 'rgba(255,255,255,0.16)'));
@@ -102,83 +101,10 @@ export default function EthiopiaMap({ scrollProgress }) {
     return () => obs.disconnect();
   }, [baseFill, litFill, strokeColor]);
 
-  const mapX = useTransform(
-    scrollProgress,
-    [0, 0.18, 0.38, 0.6, 0.82, 1],
-    reduce ? ['22vw', '22vw', '22vw', '22vw', '22vw', '22vw'] : ['24vw', '-23vw', '26vw', '-25vw', '21vw', '-8vw']
-  );
-  const mapY = useTransform(
-    scrollProgress,
-    [0, 0.18, 0.38, 0.6, 0.82, 1],
-    reduce ? ['-2vh', '-2vh', '-2vh', '-2vh', '-2vh', '-2vh'] : ['-7vh', '11vh', '-9vh', '8vh', '-12vh', '2vh']
-  );
-  const mapScale = useTransform(
-    scrollProgress,
-    [0, 0.18, 0.38, 0.6, 0.82, 1],
-    reduce ? [0.68, 0.68, 0.68, 0.68, 0.68, 0.68] : [0.72, 0.48, 0.7, 0.5, 0.66, 0.46]
-  );
-  const mapRotateX = useTransform(
-    scrollProgress,
-    [0, 0.25, 0.5, 0.75, 1],
-    reduce ? [12, 12, 12, 12, 12] : [16, 9, 18, 10, 14]
-  );
-  const mapRotateY = useTransform(
-    scrollProgress,
-    [0, 0.25, 0.5, 0.75, 1],
-    reduce ? [-12, -12, -12, -12, -12] : [-18, 14, -12, 17, -8]
-  );
-  const mapRotateZ = useTransform(
-    scrollProgress,
-    [0, 0.25, 0.5, 0.75, 1],
-    reduce ? [-5, -5, -5, -5, -5] : [-7, 5, -4, 6, -3]
-  );
-  const overallOpacity = useTransform(
-    scrollProgress,
-    [0, 0.18, 0.38, 0.6, 0.82, 1],
-    reduce ? [0.55, 0.55, 0.55, 0.55, 0.55, 0.55] : [0.58, 0.4, 0.52, 0.38, 0.5, 0.34]
-  );
-
-  return (
-    <div
-      className="eth-map"
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 0,
-        overflow: 'hidden',
-      }}
-    >
-      <motion.div
-        className="eth-map__stage"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          transformStyle: 'preserve-3d',
-          perspective: '1600px',
-          perspectiveOrigin: '50% 40%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          x: mapX,
-          y: mapY,
-          scale: mapScale,
-          rotateX: mapRotateX,
-          rotateY: mapRotateY,
-          rotateZ: mapRotateZ,
-          opacity: overallOpacity,
-        }}
-      >
-        <div
-          style={{
-            width: 'min(1100px, 95vw)',
-            aspectRatio: '1000 / 720',
-            transform: 'translateZ(18px)',
-            transformStyle: 'preserve-3d',
-            filter: 'drop-shadow(0 10px 0 rgba(35,87,44,0.45)) drop-shadow(0 30px 60px rgba(0,0,0,0.45))',
-          }}
-        >
+  return createPortal(
+    <div className="eth-map" aria-hidden="true">
+      <div className="eth-map__stage">
+        <div className="eth-map__art">
           <svg
             viewBox="0 0 1000 720"
             width="100%"
@@ -220,8 +146,9 @@ export default function EthiopiaMap({ scrollProgress }) {
             <rect x="0" y="0" width="1000" height="720" fill="url(#eth-vignette)" pointerEvents="none" />
           </svg>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -246,17 +173,22 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
   const strokeOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    reduce ? [0.45, 0.45, 0.45] : [0.45, 0.85, 0.45]
+    reduce ? [0.34, 0.42, 0.34] : [0.3, 0.48, 0.3]
   );
   const activeStrokeOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    reduce ? [0, 0, 0] : [0, 0.9, 0]
+    [0, 1, 0]
   );
   const pinOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    reduce ? [0.65, 0.65, 0.65] : [0, 1, 0]
+    [0, 1, 0]
+  );
+  const pinRadius = useTransform(
+    scrollProgress,
+    [inMin, mid, outMax],
+    [3.5, 5.5, 3.5]
   );
 
   return (
@@ -269,7 +201,7 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
           strokeOpacity,
         }}
         stroke={strokeColor}
-        strokeWidth={1.2}
+        strokeWidth={1.8}
         strokeLinejoin="round"
       >
         <title>{name}</title>
@@ -278,15 +210,33 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
         d={d}
         fill="none"
         stroke="#b7f7a8"
-        strokeWidth={1.8}
+        strokeWidth={3.2}
         strokeLinejoin="round"
-        style={{ strokeOpacity: activeStrokeOpacity }}
+        style={{
+          strokeOpacity: activeStrokeOpacity,
+          filter: 'drop-shadow(0 0 5px rgba(183,247,168,1)) drop-shadow(0 0 12px rgba(126,197,182,0.8))',
+        }}
         aria-hidden="true"
       />
       {pins.map(([x, y]) => (
-        <motion.g key={`${x}-${y}`} style={{ opacity: pinOpacity }} aria-hidden="true">
-          <circle cx={x} cy={y} r={7} fill="#b7f7a8" opacity={0.24} />
-          <circle cx={x} cy={y} r={3.2} fill="#d9ffd0" stroke="#b7f7a8" strokeWidth={1} />
+        <motion.g
+          key={`${x}-${y}`}
+          style={{
+            opacity: pinOpacity,
+            filter: 'drop-shadow(0 0 7px rgba(183,247,168,1)) drop-shadow(0 0 15px rgba(126,197,182,0.9))',
+          }}
+          aria-hidden="true"
+        >
+          <circle cx={x} cy={y} r={11} fill="#b7f7a8" opacity={0.4} />
+          <motion.circle
+            cx={x}
+            cy={y}
+            style={{ r: pinRadius }}
+            fill="#f0ffe9"
+            stroke="#ffffff"
+            strokeWidth={1.8}
+          />
+          <circle cx={x} cy={y} r={1.8} fill="#ffffff" />
         </motion.g>
       ))}
     </>
