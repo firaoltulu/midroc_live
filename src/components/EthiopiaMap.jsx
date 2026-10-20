@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
+import { circInOut, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { feature } from 'topojson-client';
 import { geoContains, geoMercator, geoPath } from 'd3-geo';
 import rawTopo from '../data/ethiopia-regions.json';
@@ -85,6 +85,13 @@ function readVar(name, fallback) {
 }
 
 export default function EthiopiaMap({ scrollProgress }) {
+  const reduceMotion = useReducedMotion();
+  const smoothedProgress = useSpring(scrollProgress, {
+    stiffness: 90,
+    damping: 28,
+    mass: 0.45,
+  });
+  const mapProgress = reduceMotion ? scrollProgress : smoothedProgress;
   const baseFill = useMotionValue(readVar('--green-700', '#23572c'));
   const litFill = useMotionValue(readVar('--gold-300', '#e6c878'));
   const strokeColor = useMotionValue(readVar('--line-strong', 'rgba(255,255,255,0.16)'));
@@ -93,8 +100,8 @@ export default function EthiopiaMap({ scrollProgress }) {
     if (typeof document === 'undefined') return;
     const sync = () => {
       baseFill.set(readVar('--green-700', '#23572c'));
-      litFill.set(readVar('--gold-300', '#daa000'));
-      strokeColor.set(readVar('--line-strong', 'rgba(232, 24, 24, 0.99)'));
+      litFill.set(readVar('--gold-300', '#e6c878'));
+      strokeColor.set(readVar('--line-strong', 'rgba(255,255,255,0.16)'));
     };
     const obs = new MutationObserver(sync);
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -136,7 +143,7 @@ export default function EthiopiaMap({ scrollProgress }) {
                 name={r.name}
                 index={i}
                 total={REGION_COUNT}
-                scrollProgress={scrollProgress}
+                scrollProgress={mapProgress}
                 baseFill={baseFill}
                 litFill={litFill}
                 strokeColor={strokeColor}
@@ -163,32 +170,38 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
   const fill = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    reduce ? [baseFill.get(), baseFill.get(), baseFill.get()] : [baseFill, litFill, baseFill]
+    reduce ? [baseFill.get(), baseFill.get(), baseFill.get()] : [baseFill, litFill, baseFill],
+    { ease: circInOut }
   );
   const opacity = useTransform(
     scrollProgress,
     [Math.max(0, inMin - 0.06), inMin, mid, outMax, Math.min(1, outMax + 0.06)],
-    reduce ? [0.85, 0.85, 0.85, 0.85, 0.85] : [0.55, 0.92, 1, 0.92, 0.55]
+    reduce ? [0.85, 0.85, 0.85, 0.85, 0.85] : [0.55, 0.92, 1, 0.92, 0.55],
+    { ease: circInOut }
   );
   const strokeOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    reduce ? [0.34, 0.42, 0.34] : [0.3, 0.48, 0.3]
+    reduce ? [0.34, 0.34, 0.34] : [0.3, 0.48, 0.3],
+    { ease: circInOut }
   );
   const activeStrokeOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    [0, 1, 0]
+    reduce ? [0, 0, 0] : [0, 0.7, 0],
+    { ease: circInOut }
   );
   const pinOpacity = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    [0, 1, 0]
+    reduce ? [0, 0, 0] : [0, 0.8, 0],
+    { ease: circInOut }
   );
   const pinRadius = useTransform(
     scrollProgress,
     [inMin, mid, outMax],
-    [3.5, 5.5, 3.5]
+    reduce ? [3.5, 3.5, 3.5] : [3.5, 4.5, 3.5],
+    { ease: circInOut }
   );
 
   return (
@@ -209,12 +222,12 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
       <motion.path
         d={d}
         fill="none"
-        stroke="#b7f7a8"
+        stroke="var(--gold-100, #f5e7c4)"
         strokeWidth={3.2}
         strokeLinejoin="round"
         style={{
           strokeOpacity: activeStrokeOpacity,
-          filter: 'drop-shadow(0 0 5px rgba(183,247,168,1)) drop-shadow(0 0 12px rgba(126,197,182,0.8))',
+          filter: 'drop-shadow(0 0 4px rgba(230,200,120,0.65)) drop-shadow(0 0 10px rgba(201,161,74,0.35))',
         }}
         aria-hidden="true"
       />
@@ -223,20 +236,20 @@ function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, lit
           key={`${x}-${y}`}
           style={{
             opacity: pinOpacity,
-            filter: 'drop-shadow(0 0 7px rgba(183,247,168,1)) drop-shadow(0 0 15px rgba(126,197,182,0.9))',
+            filter: 'drop-shadow(0 0 5px rgba(230,200,120,0.6)) drop-shadow(0 0 11px rgba(201,161,74,0.35))',
           }}
           aria-hidden="true"
         >
-          <circle cx={x} cy={y} r={11} fill="#b7f7a8" opacity={0.4} />
+          <circle cx={x} cy={y} r={10} fill="var(--gold-300, #e6c878)" opacity={0.28} />
           <motion.circle
             cx={x}
             cy={y}
             style={{ r: pinRadius }}
-            fill="#f0ffe9"
-            stroke="#ffffff"
-            strokeWidth={1.8}
+            fill="var(--gold-100, #f5e7c4)"
+            stroke="var(--ink-0, #f5f3ee)"
+            strokeWidth={1.5}
           />
-          <circle cx={x} cy={y} r={1.8} fill="#ffffff" />
+          <circle cx={x} cy={y} r={1.6} fill="var(--ink-0, #f5f3ee)" />
         </motion.g>
       ))}
     </>
