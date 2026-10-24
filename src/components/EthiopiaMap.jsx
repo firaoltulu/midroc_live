@@ -4,11 +4,23 @@ import { circInOut, motion, useMotionValue, useReducedMotion, useSpring, useTran
 import { feature } from 'topojson-client';
 import { geoContains, geoMercator, geoPath } from 'd3-geo';
 import rawTopo from '../data/ethiopia-regions.json';
+import easternAfrica from '../data/eastern-africa-countries.json';
 
 const fc = feature(rawTopo, rawTopo.objects.ETHADM1gbOpen);
 
 const PROJECTION = geoMercator().center([40, 9]).scale(1900).translate([500, 360]);
 const PATH = geoPath(PROJECTION);
+const EAST_AFRICA_COUNTRIES = easternAfrica.features.map((country) => ({
+  id: country.id,
+  name: country.properties.name,
+  d: PATH(country),
+}));
+const SEA_LABELS = [
+  { name: 'RED SEA', position: PROJECTION([39, 17]) },
+  { name: 'GULF OF ADEN', position: PROJECTION([47.5, 12]) },
+  { name: 'ARABIAN SEA', position: PROJECTION([52, 12]) },
+  { name: 'INDIAN OCEAN', position: PROJECTION([51, -1]) },
+];
 
 const REGIONS = fc.features.map((f, i) => ({
   id: f.properties.shapeISO || `r${i}`,
@@ -111,6 +123,39 @@ export default function EthiopiaMap({ scrollProgress }) {
   return createPortal(
     <div className="eth-map" aria-hidden="true">
       <div className="eth-map__stage">
+        <svg
+          className="eth-map__context"
+          viewBox="0 0 1000 720"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <g className="eth-map__east-africa">
+            {EAST_AFRICA_COUNTRIES.map((country) => (
+              <path
+                key={country.id}
+                d={country.d}
+                fill="var(--green-500, #3f8a4a)"
+                fillOpacity={0.08}
+                stroke="var(--gold-300, #e6c878)"
+                strokeOpacity={0.45}
+                strokeWidth={1.6}
+                strokeLinejoin="round"
+              />
+            ))}
+          </g>
+          <g
+            fill="var(--gold-100, #f5e7c4)"
+            fontFamily="var(--font-sans, sans-serif)"
+            fontSize={12}
+            fontWeight={600}
+            letterSpacing={1.5}
+            opacity={0.65}
+            textAnchor="middle"
+          >
+            {SEA_LABELS.map(({ name, position }) => (
+              <text key={name} x={position[0]} y={position[1]}>{name}</text>
+            ))}
+          </g>
+        </svg>
         <div className="eth-map__art">
           <svg
             viewBox="0 0 1000 720"
