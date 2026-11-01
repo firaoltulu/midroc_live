@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Reveal({
   children,
@@ -8,19 +8,36 @@ export default function Reveal({
   id,
   as: Tag = 'div',
 }) {
-  const reduce = useReducedMotion();
-  const MotionTag = motion[Tag] || motion.div;
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      setVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '-80px' }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <MotionTag
-      className={className}
+    <Tag
+      ref={ref}
+      className={`reveal ${visible ? 'is-visible' : ''} ${className || ''}`.trim()}
       id={id}
-      initial={reduce ? false : { opacity: 0, y }}
-      whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay }}
+      style={{ '--reveal-delay': `${delay}s`, '--reveal-y': `${y}px` }}
     >
       {children}
-    </MotionTag>
+    </Tag>
   );
 }

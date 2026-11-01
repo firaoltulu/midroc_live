@@ -1,21 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight, ChevronDown, Pause, Play } from 'lucide-react';
 import { SECTORS } from '../data';
 import { getAllNews, imageUrl } from '../store';
 import Reveal from '../components/Reveal';
-import EthiopiaMap from '../components/EthiopiaMap';
+import addisSheratonImage from '../assets/hero/Addis-Sheraton.png';
+import coffeeCherriesImage from '../assets/hero/Coffee-Cherry.png';
+import midrocOperationsVideo from '../assets/hero/midroc_for_country.mp4';
+import midrocmanufacturingVideo from '../assets/hero/midroc_ice_cream.mp4';
+// import midrocAllImage from '../assets/hero/midroc_image.jpg';
+import midrocConstructionVideo from '../assets/hero/midroc_construction.mp4';
 
 // Drop real media files into public/hero/.
 const HERO_SLIDES = [
-  { type: 'image', src: '/hero/slide-1.jpg', alt: 'Midroc projects across Africa' },
-  { type: 'video', src: '/hero/slide-2.mp4', poster: '/hero/slide-2.jpg', alt: 'Midroc operations video' },
-  { type: 'image', src: '/hero/slide-3.jpg', alt: 'Industrial and community development' },
-  { type: 'video', src: '/hero/slide-4.mp4', poster: '/hero/slide-4.jpg', alt: 'Sustainable growth video' },
-  { type: 'image', src: '/hero/slide-5.jpg', alt: 'African manufacturing and enterprise' },
-  { type: 'video', src: '/hero/slide-6.mp4', poster: '/hero/slide-6.jpg', alt: 'Midroc hospitality and infrastructure' },
+  { type: 'image', src: coffeeCherriesImage, alt: 'Coffee cherries' },
+  { type: 'video', src: midrocOperationsVideo, poster: '/hero/slide-2.jpg', alt: 'Midroc for Country event video' },
+  { type: 'image', src: addisSheratonImage, alt: 'Sheraton Addis Collection Hotel' },
+  { type: 'video', src: midrocmanufacturingVideo, poster: '/hero/slide-4.jpg', alt: 'Midroc manufacturing video' },
+  // { type: 'image', src: midrocAllImage, alt: 'all companies' },
+  { type: 'video', src: midrocConstructionVideo, poster: '/hero/slide-6.jpg', alt: 'Midroc construction video' },
 ];
+const TITLE_REGIONS = ['Africa', 'Ethiopia'];
 
 export default function Home() {
   const [homeNews, setHomeNews] = useState([]);
@@ -26,6 +31,11 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(() => (
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   ));
+  const [reduce, setReduce] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ));
+  const [titleRegionIndex, setTitleRegionIndex] = useState(0);
+  const [typedRegion, setTypedRegion] = useState('');
   const videoRefs = useRef([]);
   const fadePauseTimer = useRef(null);
 
@@ -36,29 +46,7 @@ export default function Home() {
       .catch((err) => { if (!cancelled) console.error('[home] load failed', err); });
     return () => { cancelled = true; };
   }, []);
-  const heroRef = useRef(null);
-  const sectorsRef = useRef(null);
   const rootRef = useRef(null);
-  const reduce = useReducedMotion();
-
-
-  const { scrollYProgress: pageScroll } = useScroll();
-
-  const { scrollYProgress: heroScroll } = useScroll({
-    target: heroRef,
-    offset: ['start start', 'end start'],
-  });
-  const heroTitleY = useTransform(heroScroll, [0, 1], reduce ? [0, 0] : [0, 160]);
-  const heroSubY = useTransform(heroScroll, [0, 1], reduce ? [0, 0] : [0, 80]);
-  const heroScale = useTransform(heroScroll, [0, 1], reduce ? [1, 1] : [1, 0.96]);
-  const heroOpacity = useTransform(heroScroll, [0, 0.85], reduce ? [1, 1] : [1, 0]);
-  const orbRotate = useTransform(heroScroll, [0, 1], reduce ? [0, 0] : [0, 30]);
-  const gridY = useTransform(heroScroll, [0, 1], reduce ? [0, 0] : [0, -120]);
-
-  const { scrollYProgress: sectorsScroll } = useScroll({
-    target: sectorsRef,
-    offset: ['start end', 'end start'],
-  });
 
   const goToSlide = useCallback((nextIndex) => {
     setActiveSlide((current) => {
@@ -91,6 +79,7 @@ export default function Home() {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const onMobileChange = (event) => setIsMobile(event.matches);
     const onMotionChange = (event) => {
+      setReduce(event.matches);
       if (event.matches) setIsPaused(true);
     };
     mobileQuery.addEventListener('change', onMobileChange);
@@ -116,7 +105,7 @@ export default function Home() {
 
     video.currentTime = 0;
     const playPromise = video.play();
-    if (playPromise) playPromise.catch(() => {});
+    if (playPromise) playPromise.catch(() => { });
 
     const fallback = window.setTimeout(goToNextSlide, 30000);
     return () => window.clearTimeout(fallback);
@@ -128,13 +117,42 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [activeSlide, isPaused, goToNextSlide]);
 
+  useEffect(() => {
+    if (reduce) {
+      setTypedRegion(TITLE_REGIONS[titleRegionIndex]);
+      return undefined;
+    }
+
+    const timers = [];
+    const target = TITLE_REGIONS[titleRegionIndex];
+    setTypedRegion('');
+
+    target.split('').forEach((character, characterIndex) => {
+      timers.push(window.setTimeout(() => {
+        setTypedRegion(target.slice(0, characterIndex + 1));
+      }, 110 * characterIndex));
+    });
+
+    const typeDuration = 110 * target.length;
+    timers.push(window.setTimeout(() => {
+      for (let characterIndex = target.length - 1; characterIndex >= 0; characterIndex -= 1) {
+        timers.push(window.setTimeout(() => {
+          setTypedRegion(target.slice(0, characterIndex));
+        }, 70 * (target.length - characterIndex)));
+      }
+    }, typeDuration + 3000));
+
+    timers.push(window.setTimeout(() => {
+      setTitleRegionIndex((current) => (current + 1) % TITLE_REGIONS.length);
+    }, typeDuration + 3000 + 70 * target.length + 250));
+
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [reduce, titleRegionIndex]);
+
   return (
     <div ref={rootRef} className="home-root">
 
-      {/* <EthiopiaMap scrollProgress={pageScroll} /> */}
-
       <section
-        ref={heroRef}
         className={`hero hero-carousel ${reduce ? 'is-reduced-motion' : ''}`}
         aria-roledescription="carousel"
         aria-label="Featured Midroc stories"
@@ -176,28 +194,38 @@ export default function Home() {
 
         <div className="hero-carousel__overlay" aria-hidden="true" />
 
-        <motion.div
-          className="container hero-carousel__content"
-          style={{ y: heroTitleY, scale: heroScale, opacity: heroOpacity }}
-        >
-          <p className="hero-carousel__eyebrow">MIDROC Investment Group</p>
-          <h1 className="hero-carousel__title">
-            Building Africa,<br />
-            <em>sector by sector.</em>
-          </h1>
-          <p className="hero-carousel__lede">
-            Building enduring enterprises across critical sectors, creating
-            opportunity and lasting impact for communities throughout Africa.
-          </p>
-          <div className="hero-carousel__ctas">
-            <Link to="/about" className="btn btn--primary">
-              Explore the group <ArrowUpRight size={16} />
-            </Link>
-            <Link to="/news" className="btn btn--ghost">
-              Latest news <ArrowRight size={16} />
-            </Link>
+        <div className="container hero-carousel__content">
+          <div
+            className="hero-logo-slot"
+            data-hero-logo-slot
+            aria-hidden="true"
+          />
+          <div className="hero-carousel__copy">
+            <p className="hero-carousel__eyebrow">MIDROC Investment Group</p>
+            <h1 className="hero-carousel__title">
+              <span className="hero-carousel__headline-line">
+                Building
+                <span className="hero-carousel__region" aria-live="off">
+                  <em>{typedRegion}</em><span className="hero-carousel__caret" aria-hidden="true" />,
+                </span>
+              </span>
+              <br />
+              {/* <em>sector by sector.</em> */}
+            </h1>
+            <p className="hero-carousel__lede">
+              Building enduring enterprises across critical sectors, creating
+              opportunity and lasting impact for communities throughout Africa.
+            </p>
+            <div className="hero-carousel__ctas">
+              <Link to="/about" className="btn btn--primary">
+                Explore the group <ArrowUpRight size={16} />
+              </Link>
+              <Link to="/news" className="btn btn--ghost">
+                Latest news <ArrowRight size={16} />
+              </Link>
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         <div className="hero-carousel__controls" aria-label="Carousel controls">
           <div className="hero-carousel__dots">
@@ -243,7 +271,7 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <section ref={sectorsRef} className="section">
+      <section className="section">
         <div className="container">
           <div className="sectors__header">
             <Reveal>
@@ -273,7 +301,6 @@ export default function Home() {
                 sector={sector}
                 index={i}
                 total={SECTORS.length}
-                scrollProgress={sectorsScroll}
               />
             ))}
           </div>
@@ -360,32 +387,14 @@ export default function Home() {
 
 }
 
-function SectorCard({ sector, index, total, scrollProgress }) {
-  const ref = useRef(null);
-  const reduce = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 0.5, 1], reduce ? [0, 0, 0] : [80, 0, -60]);
-  const rotate = useTransform(scrollYProgress, [0, 0.5, 1], reduce ? [0, 0, 0] : [4, 0, -3]);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], reduce ? [1, 1, 1] : [0.96, 1, 0.98]);
-  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], reduce ? [1, 1, 1, 1] : [0, 1, 1, 0.6]);
-
+function SectorCard({ sector, index, total }) {
   const Icon = sector.icon;
   const num = String(index + 1).padStart(2, '0');
 
   return (
-    <motion.div
-      ref={ref}
+    <div
       style={{
         '--sector-accent': sector.accent,
-        y,
-        rotate,
-        scale,
-        opacity,
       }}
     >
       <Link to={`/clusters/${sector.key}`} className="sector-card">
@@ -411,7 +420,7 @@ function SectorCard({ sector, index, total, scrollProgress }) {
           </span>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 // 
