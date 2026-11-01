@@ -69,20 +69,24 @@
 }
 .nav.is-scrolled .nav__brand img { height: 44px; width: auto; }
 .nav__logo-slot {
-  width: 121px;
-  height: 44px;
-  flex: 0 0 121px;
+  width: 112px;
+  height: 79px;
+  flex: 0 0 112px;
   display: flex;
   align-items: center;
 }
 .nav__brand--static {
-  width: 121px;
-  height: 44px;
+  width: 112px;
+  height: 79px;
 }
 .nav__brand--static img {
-  width: 121px;
-  height: 44px;
+  width: 112px;
+  height: 79px;
   object-fit: contain;
+}
+.nav.is-scrolled .nav__brand--static img {
+  width: 112px;
+  height: 79px;
 }
 .nav__flying-logo {
   position: fixed;
@@ -598,7 +602,7 @@
 }
 .hero-logo-slot {
   width: var(--logo-hero-w);
-  aspect-ratio: 373 / 135;
+  aspect-ratio: 377 / 266;
   flex: 0 0 auto;
 }
 .hero-carousel__copy { min-width: 0; }
@@ -743,11 +747,18 @@
   .home-root { --logo-hero-w: clamp(180px, 48vw, 360px); }
   .nav__logo-slot,
   .nav__brand--static {
-    width: 99px;
-    height: 36px;
-    flex-basis: 99px;
+    width: 82px;
+    height: 58px;
+    flex-basis: 82px;
   }
-  .nav__brand--static img { width: 99px; height: 36px; }
+  .nav__brand--static img {
+    width: 82px;
+    height: 58px;
+  }
+  .nav.is-scrolled .nav__brand--static img {
+    width: 82px;
+    height: 58px;
+  }
   .nav__flying-logo {
     width: clamp(180px, 48vw, 360px);
   }
