@@ -1,14 +1,33 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, ChevronDown, Pause, Play } from 'lucide-react';
 import { SECTORS } from '../data';
 import { getAllNews, imageUrl } from '../store';
 import Reveal from '../components/Reveal';
 import EthiopiaMap from '../components/EthiopiaMap';
 
+// Drop real media files into public/hero/.
+const HERO_SLIDES = [
+  { type: 'image', src: '/hero/slide-1.jpg', alt: 'Midroc projects across Africa' },
+  { type: 'video', src: '/hero/slide-2.mp4', poster: '/hero/slide-2.jpg', alt: 'Midroc operations video' },
+  { type: 'image', src: '/hero/slide-3.jpg', alt: 'Industrial and community development' },
+  { type: 'video', src: '/hero/slide-4.mp4', poster: '/hero/slide-4.jpg', alt: 'Sustainable growth video' },
+  { type: 'image', src: '/hero/slide-5.jpg', alt: 'African manufacturing and enterprise' },
+  { type: 'video', src: '/hero/slide-6.mp4', poster: '/hero/slide-6.jpg', alt: 'Midroc hospitality and infrastructure' },
+];
+
 export default function Home() {
   const [homeNews, setHomeNews] = useState([]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ));
+  const [isMobile, setIsMobile] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  ));
+  const videoRefs = useRef([]);
+  const fadePauseTimer = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,104 +60,174 @@ export default function Home() {
     offset: ['start end', 'end start'],
   });
 
+  const goToSlide = useCallback((nextIndex) => {
+    setActiveSlide((current) => {
+      if (nextIndex === current) return current;
+      if (fadePauseTimer.current) window.clearTimeout(fadePauseTimer.current);
+      fadePauseTimer.current = window.setTimeout(() => {
+        videoRefs.current.forEach((video, index) => {
+          if (video && index !== nextIndex) video.pause();
+        });
+      }, 1200);
+      return nextIndex;
+    });
+  }, []);
+
+  const goToNextSlide = useCallback(() => {
+    setActiveSlide((current) => {
+      const nextIndex = (current + 1) % HERO_SLIDES.length;
+      if (fadePauseTimer.current) window.clearTimeout(fadePauseTimer.current);
+      fadePauseTimer.current = window.setTimeout(() => {
+        videoRefs.current.forEach((video, index) => {
+          if (video && index !== nextIndex) video.pause();
+        });
+      }, 1200);
+      return nextIndex;
+    });
+  }, []);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMobileChange = (event) => setIsMobile(event.matches);
+    const onMotionChange = (event) => {
+      if (event.matches) setIsPaused(true);
+    };
+    mobileQuery.addEventListener('change', onMobileChange);
+    motionQuery.addEventListener('change', onMotionChange);
+    return () => {
+      mobileQuery.removeEventListener('change', onMobileChange);
+      motionQuery.removeEventListener('change', onMotionChange);
+      if (fadePauseTimer.current) window.clearTimeout(fadePauseTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const slide = HERO_SLIDES[activeSlide];
+    if (slide.type !== 'video') return undefined;
+
+    const video = videoRefs.current[activeSlide];
+    if (!video || isMobile) return undefined;
+
+    if (isPaused) {
+      video.pause();
+      return undefined;
+    }
+
+    video.currentTime = 0;
+    const playPromise = video.play();
+    if (playPromise) playPromise.catch(() => {});
+
+    const fallback = window.setTimeout(goToNextSlide, 30000);
+    return () => window.clearTimeout(fallback);
+  }, [activeSlide, isMobile, isPaused, goToNextSlide]);
+
+  useEffect(() => {
+    if (isPaused || HERO_SLIDES[activeSlide].type !== 'image') return undefined;
+    const timer = window.setTimeout(goToNextSlide, 6000);
+    return () => window.clearTimeout(timer);
+  }, [activeSlide, isPaused, goToNextSlide]);
+
   return (
     <div ref={rootRef} className="home-root">
 
-      <EthiopiaMap scrollProgress={pageScroll} />
+      {/* <EthiopiaMap scrollProgress={pageScroll} /> */}
 
-      <section ref={heroRef} className="hero">
-        <div className="hero__bg" aria-hidden="true">
-          <motion.div className="hero__grid" style={{ y: gridY }} />
-          <motion.div
-            className="hero__bg-orb hero__bg-orb--gold"
-            style={{ rotate: orbRotate }}
-          />
-          <motion.div
-            className="hero__bg-orb hero__bg-orb--green"
-            style={{ rotate: useTransform(orbRotate, (v) => -v) }}
-          />
+      <section
+        ref={heroRef}
+        className={`hero hero-carousel ${reduce ? 'is-reduced-motion' : ''}`}
+        aria-roledescription="carousel"
+        aria-label="Featured Midroc stories"
+      >
+        <div className="hero-carousel__media" aria-live="off">
+          {HERO_SLIDES.map((slide, index) => {
+            const isActive = index === activeSlide;
+            return (
+              <div
+                className={`hero-carousel__slide ${isActive ? 'is-active' : ''}`}
+                key={slide.src}
+                aria-hidden={!isActive}
+              >
+                {slide.type === 'video' && !isMobile ? (
+                  <video
+                    ref={(element) => { videoRefs.current[index] = element; }}
+                    className="hero-carousel__video"
+                    src={slide.src}
+                    poster={slide.poster}
+                    muted
+                    playsInline
+                    preload={index < 2 ? 'auto' : 'metadata'}
+                    onEnded={goToNextSlide}
+                    onError={goToNextSlide}
+                    aria-label={slide.alt}
+                  />
+                ) : (
+                  <img
+                    className="hero-carousel__image"
+                    src={slide.type === 'video' ? slide.poster : slide.src}
+                    alt={isActive ? slide.alt : ''}
+                    aria-hidden={!isActive}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="container hero__content">
-          <motion.div
-            style={{ y: heroTitleY, scale: heroScale, opacity: heroOpacity }}
-          >
-            <span className="hero__badge">
-              <span className="hero__badge-dot" />
-              v1 2026 · MIDROC Investment Group
-            </span>
-          </motion.div>
+        <div className="hero-carousel__overlay" aria-hidden="true" />
 
-          <motion.h1
-            className="hero__title"
-            style={{ y: heroTitleY, opacity: heroOpacity }}
-          >
+        <motion.div
+          className="container hero-carousel__content"
+          style={{ y: heroTitleY, scale: heroScale, opacity: heroOpacity }}
+        >
+          <p className="hero-carousel__eyebrow">MIDROC Investment Group</p>
+          <h1 className="hero-carousel__title">
             Building Africa,<br />
             <em>sector by sector.</em>
-          </motion.h1>
-
-          <motion.p
-            className="hero__sub lede"
-            style={{ y: heroSubY, opacity: heroOpacity }}
-          >
-            Midroc is a privately-held investment group operating across six
-            critical sectors of the African economy — from the farm to the
-            factory floor, from the mine to the marketplace.
-          </motion.p>
-
-          <motion.div
-            className="hero__ctas"
-            style={{ opacity: heroOpacity }}
-          >
+          </h1>
+          <p className="hero-carousel__lede">
+            Building enduring enterprises across critical sectors, creating
+            opportunity and lasting impact for communities throughout Africa.
+          </p>
+          <div className="hero-carousel__ctas">
             <Link to="/about" className="btn btn--primary">
               Explore the group <ArrowUpRight size={16} />
             </Link>
             <Link to="/news" className="btn btn--ghost">
               Latest news <ArrowRight size={16} />
             </Link>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          <motion.div
-            className="hero__meta"
-            id="counter"
-            style={{ opacity: heroOpacity }}
+        <div className="hero-carousel__controls" aria-label="Carousel controls">
+          <div className="hero-carousel__dots">
+            {HERO_SLIDES.map((slide, index) => (
+              <button
+                key={slide.src}
+                type="button"
+                className={`hero-carousel__dot ${index === activeSlide ? 'is-active' : ''}`}
+                aria-label={`Show slide ${index + 1}`}
+                aria-current={index === activeSlide ? 'true' : undefined}
+                onClick={() => goToSlide(index)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="hero-carousel__pause"
+            aria-label={isPaused ? 'Play carousel' : 'Pause carousel'}
+            onClick={() => setIsPaused((paused) => !paused)}
           >
-            <div className="hero__meta-stat">
-              <strong>6</strong>
-              <span>Sectors</span>
-            </div>
-            <div className="hero__meta-stat">
-              <strong>43</strong>
-              <span>Companies</span>
-            </div>
-            <div className="hero__meta-stat">
-              <strong>70k+</strong>
-              <span>Employees</span>
-            </div>
-            <div className="hero__meta-stat">
-              <strong>$1.4B</strong>
-              <span>Annual revenue</span>
-            </div>
-          </motion.div>
+            {isPaused ? <Play size={16} /> : <Pause size={16} />}
+            <span>{isPaused ? 'Play' : 'Pause'}</span>
+          </button>
         </div>
 
-        <motion.div
+        <ChevronDown
+          className="hero-carousel__down"
+          size={20}
           aria-hidden="true"
-          style={{ opacity: heroOpacity }}
-          initial={false}
-        >
-          <ChevronDown
-            size={20}
-            style={{
-              position: 'absolute',
-              bottom: 32,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'var(--ink-2)',
-              opacity: 0.6,
-            }}
-          />
-        </motion.div>
+        />
       </section>
 
       <Reveal as="div" id="sectors-marquee">

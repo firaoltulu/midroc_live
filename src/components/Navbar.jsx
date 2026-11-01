@@ -12,7 +12,7 @@ export default function Navbar() {
   const isLight = theme === 'light';
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => setScrolled(window.scrollY > 50);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -37,7 +37,7 @@ export default function Navbar() {
             <img
               src="/midroc.png"
               alt="Midroc logo"
-              style={{ width: 160, height: 60, objectFit: 'contain' }}
+              style={{ width: 160, objectFit: 'contain' }}
             />
           </Link>
 
@@ -48,7 +48,7 @@ export default function Navbar() {
                 to={l.to}
                 end={l.to === '/'}
                 className={({ isActive }) =>
-                  `nav__link ${isActive ? 'is-active' : ''}`
+                  `nav__link ${l.label === 'Contact' ? 'nav__link--contact' : ''} ${isActive ? 'is-active' : ''}`
                 }
               >
                 {l.label}
