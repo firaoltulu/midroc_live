@@ -16,9 +16,10 @@ const HERO_SLIDES = [
   { type: 'image', src: coffeeCherriesImage, alt: 'Coffee cherries' },
   { type: 'video', src: midrocOperationsVideo, poster: '/hero/slide-2.jpg', alt: 'Midroc for Country event video' },
   { type: 'image', src: addisSheratonImage, alt: 'Sheraton Addis Collection Hotel' },
+  { type: 'video', src: midrocConstructionVideo, poster: '/hero/slide-6.jpg', alt: 'Midroc construction video' },
+
   { type: 'video', src: midrocmanufacturingVideo, poster: '/hero/slide-4.jpg', alt: 'Midroc manufacturing video' },
   // { type: 'image', src: midrocAllImage, alt: 'all companies' },
-  { type: 'video', src: midrocConstructionVideo, poster: '/hero/slide-6.jpg', alt: 'Midroc construction video' },
 ];
 const TITLE_REGIONS = ['Africa', 'Ethiopia'];
 
