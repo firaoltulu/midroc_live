@@ -25,6 +25,71 @@ const HERO_SLIDES = [
 ];
 const TITLE_REGIONS = ['Africa', 'Ethiopia'];
 
+function CountUp({ value, duration = 1600 }) {
+  const ref = useRef(null);
+  const [displayValue, setDisplayValue] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      setDisplayValue(Number.parseFloat(value.match(/\d+(?:\.\d+)?/)?.[0] || 0));
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [value]);
+
+  useEffect(() => {
+    if (!started) return undefined;
+
+    const match = value.match(/^(\D*)(\d+(?:\.\d+)?)(\D*)$/);
+    if (!match) {
+      setDisplayValue(0);
+      return undefined;
+    }
+
+    const target = Number(match[2]);
+    const decimalPlaces = (match[2].split('.')[1] || '').length;
+    let frameId;
+    const startTime = performance.now();
+
+    const animate = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Number((target * eased).toFixed(decimalPlaces)));
+
+      if (progress < 1) frameId = window.requestAnimationFrame(animate);
+    };
+
+    frameId = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [started, value, duration]);
+
+  const match = value.match(/^(\D*)(\d+(?:\.\d+)?)(\D*)$/);
+  const decimalPlaces = match ? (match[2].split('.')[1] || '').length : 0;
+  const formatted = match
+    ? `${match[1]}${displayValue.toFixed(decimalPlaces)}${match[3]}`
+    : value;
+
+  return (
+    <span ref={ref} className="stats__num" aria-label={value}>
+      <span aria-hidden="true">{formatted}</span>
+    </span>
+  );
+}
+
 export default function Home() {
   const [homeNews, setHomeNews] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -317,24 +382,27 @@ export default function Home() {
 
       <Reveal>
         <div className="stats">
+         
           <div className="stats__item">
-            <span className="stats__num">$1.4B</span>
+            <CountUp value="$1.4B" />
             <span className="stats__label">Annual revenue</span>
           </div>
           <div className="stats__item">
-            <span className="stats__num">70k+</span>
+            <CountUp value="70k+" />
             <span className="stats__label">Employees</span>
           </div>
           <div className="stats__item">
-            <span className="stats__num">43</span>
+            <CountUp value="43" />
             <span className="stats__label">Companies</span>
           </div>
           <div className="stats__item">
-            <span className="stats__num">6</span>
+            <CountUp value="6" />
             <span className="stats__label">Sectors</span>
           </div>
+
         </div>
       </Reveal>
+
       {/* News */}
       <section className="section">
         <div className="container">

@@ -928,7 +928,10 @@
   padding: 40px 24px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
+  text-align: center;
 }
 .stats__num {
   font-family: var(--font-serif);
