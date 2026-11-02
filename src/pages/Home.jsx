@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight, ChevronDown, Pause, Play } from 'lucide-react';
+import { useScroll } from 'framer-motion';
 import { SECTORS } from '../data';
 import { getAllNews, imageUrl } from '../store';
 import Reveal from '../components/Reveal';
+import EthiopiaMap from '../components/EthiopiaMap';
 import addisSheratonImage from '../assets/hero/Addis-Sheraton.png';
 import coffeeCherriesImage from '../assets/hero/Coffee-Cherry.png';
 import midrocOperationsVideo from '../assets/hero/midroc_for_country.mp4';
@@ -39,6 +41,11 @@ export default function Home() {
   const [typedRegion, setTypedRegion] = useState('');
   const videoRefs = useRef([]);
   const fadePauseTimer = useRef(null);
+  const mapSectionRef = useRef(null);
+  const { scrollYProgress: mapScrollProgress } = useScroll({
+    target: mapSectionRef,
+    offset: ['start start', 'end end'],
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -328,7 +335,7 @@ export default function Home() {
           </div>
         </div>
       </Reveal>
-
+      {/* News */}
       <section className="section">
         <div className="container">
           <div className="sectors__header" style={{ marginBottom: 48 }}>
@@ -358,6 +365,20 @@ export default function Home() {
                 </Link>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section ref={mapSectionRef} className="ethiopia-showcase section--tight" aria-labelledby="ethiopia-showcase-heading">
+        <div className="ethiopia-showcase__sticky">
+          <div className="ethiopia-showcase__intro">
+            <span className="eyebrow">Across Ethiopia</span>
+            <h2 id="ethiopia-showcase-heading">
+              A footprint <em>that keeps growing.</em>
+            </h2>
+          </div>
+          <div className="ethiopia-showcase__map">
+            <EthiopiaMap scrollProgress={mapScrollProgress} inSection />
           </div>
         </div>
       </section>

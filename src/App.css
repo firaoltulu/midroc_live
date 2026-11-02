@@ -2084,3 +2084,88 @@ a.sector-card:hover {
   background: rgba(184, 90, 58, 1);
   color: #fff;
 }
+
+/* ---------- ETHIOPIA SCROLL SHOWCASE ---------- */
+.ethiopia-showcase {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(247, 244, 234, 0.96), rgba(247, 244, 234, 0.98));
+  color: var(--ink);
+  scroll-margin-top: 76px;
+  height: 260vh;
+  padding-block: 0;
+}
+.ethiopia-showcase__sticky {
+  position: sticky;
+  top: 76px;
+  height: calc(100vh - 76px);
+  min-height: 520px;
+  overflow: hidden;
+}
+.ethiopia-showcase__intro {
+  position: absolute;
+  z-index: 4;
+  top: clamp(24px, 4vh, 48px);
+  left: max(24px, calc((100vw - 1280px) / 2 + 48px));
+  width: min(520px, calc(100% - 48px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ethiopia-showcase__intro .eyebrow {
+  color: var(--gold-700);
+  margin-bottom: 16px;
+}
+.ethiopia-showcase__intro h2 {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+.ethiopia-showcase__intro h2 em {
+  color: var(--gold-700);
+  font-style: italic;
+  font-weight: 300;
+}
+.ethiopia-showcase__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.eth-map.eth-map--in-section {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.eth-map.eth-map--in-section::before { display: none; }
+.eth-map.eth-map--in-section .eth-map__stage {
+  opacity: 1;
+}
+.eth-map.eth-map--in-section .eth-map__art {
+  width: min(1320px, 100vw, 150svh);
+  filter: drop-shadow(0 12px 0 rgba(35,87,44,0.34)) drop-shadow(0 28px 48px rgba(15,59,46,0.20));
+}
+.eth-map.eth-map--in-section .eth-map__context {
+  opacity: 0.26;
+}
+
+@media (max-width: 767px) {
+  .ethiopia-showcase { scroll-margin-top: 60px; }
+  .ethiopia-showcase__sticky {
+    top: 60px;
+    height: calc(100vh - 60px);
+    min-height: 460px;
+  }
+  .ethiopia-showcase__intro {
+    top: 24px;
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+  .ethiopia-showcase__map {
+    width: 100%;
+    height: 100%;
+  }
+  .eth-map.eth-map--in-section .eth-map__art {
+    width: min(108vw, 150svh);
+  }
+}

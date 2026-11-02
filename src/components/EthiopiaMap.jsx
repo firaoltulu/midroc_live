@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { circInOut, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import { circOut, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { feature } from 'topojson-client';
 import { geoContains, geoMercator, geoPath } from 'd3-geo';
 import rawTopo from '../data/ethiopia-regions.json';
@@ -29,6 +29,26 @@ const REGIONS = fc.features.map((f, i) => ({
   pins: getRegionPins(f),
   index: i,
 }));
+
+REGIONS.forEach((region) => {
+  if (!region.pins.length) return;
+  region.center = region.pins.reduce(
+    ([sumX, sumY], [x, y]) => [sumX + x, sumY + y],
+    [0, 0],
+  );
+  region.center[0] /= region.pins.length;
+  region.center[1] /= region.pins.length;
+});
+
+const GEOGRAPHIC_REGION_ORDER = [...REGIONS]
+  .sort((a, b) => {
+    if (!a.center || !b.center) return a.index - b.index;
+    return (a.center[1] - b.center[1]) || (a.center[0] - b.center[0]);
+  })
+  .map((region) => region.id);
+const activationIndex = new Map(
+  GEOGRAPHIC_REGION_ORDER.map((id, index) => [id, index]),
+);
 
 const REGION_COUNT = REGIONS.length;
 
@@ -96,12 +116,13 @@ function readVar(name, fallback) {
   return v || fallback;
 }
 
-export default function EthiopiaMap({ scrollProgress }) {
+export default function EthiopiaMap({ scrollProgress, inSection = false }) {
   const reduceMotion = useReducedMotion();
   const smoothedProgress = useSpring(scrollProgress, {
-    stiffness: 90,
-    damping: 28,
-    mass: 0.45,
+    stiffness: 180,
+    damping: 30,
+    mass: 0.18,
+    restDelta: 0.001,
   });
   const mapProgress = reduceMotion ? scrollProgress : smoothedProgress;
   const baseFill = useMotionValue(readVar('--green-700', '#23572c'));
@@ -120,8 +141,8 @@ export default function EthiopiaMap({ scrollProgress }) {
     return () => obs.disconnect();
   }, [baseFill, litFill, strokeColor]);
 
-  return createPortal(
-    <div className="eth-map" aria-hidden="true">
+  const map = (
+    <div className={`eth-map${inSection ? ' eth-map--in-section' : ''}`} aria-hidden="true">
       <div className="eth-map__stage">
         <svg
           className="eth-map__context"
@@ -186,7 +207,7 @@ export default function EthiopiaMap({ scrollProgress }) {
                 d={r.d}
                 pins={r.pins}
                 name={r.name}
-                index={i}
+                index={activationIndex.get(r.id) ?? i}
                 total={REGION_COUNT}
                 scrollProgress={mapProgress}
                 baseFill={baseFill}
@@ -199,54 +220,55 @@ export default function EthiopiaMap({ scrollProgress }) {
           </svg>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
+
+  return inSection ? map : createPortal(map, document.body);
 }
 
 function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, litFill, strokeColor }) {
   const reduce = useReducedMotion();
-  const center = (index + 0.5) / total;
-  const half = 1 / total;
-  const inMin = Math.max(0, center - half);
-  const outMax = Math.min(1, center + half);
-  const mid = (inMin + outMax) / 2;
+  const start = total === 1 ? 0.5 : 0.04 + (index / Math.max(1, total - 1)) * 0.92;
+  const transitionStart = Math.max(0, start - 0.11);
+  const transitionEnd = Math.min(1, start + 0.11);
+  const highlightStart = Math.max(0, start - 0.02);
+  const highlightEnd = Math.min(1, start + 0.055);
 
   const fill = useTransform(
     scrollProgress,
-    [inMin, mid, outMax],
-    reduce ? [baseFill.get(), baseFill.get(), baseFill.get()] : [baseFill, litFill, baseFill],
-    { ease: circInOut }
+    reduce ? [0, 1] : [transitionStart, transitionEnd],
+    reduce ? [litFill, litFill] : [baseFill, litFill],
+    { ease: circOut }
   );
   const opacity = useTransform(
     scrollProgress,
-    [Math.max(0, inMin - 0.06), inMin, mid, outMax, Math.min(1, outMax + 0.06)],
-    reduce ? [0.85, 0.85, 0.85, 0.85, 0.85] : [0.55, 0.92, 1, 0.92, 0.55],
-    { ease: circInOut }
+    reduce ? [0, 1] : [transitionStart, transitionEnd],
+    reduce ? [1, 1] : [0.82, 1],
+    { ease: circOut }
   );
   const strokeOpacity = useTransform(
     scrollProgress,
-    [inMin, mid, outMax],
-    reduce ? [0.34, 0.34, 0.34] : [0.3, 0.48, 0.3],
-    { ease: circInOut }
+    reduce ? [0, 1] : [transitionStart, transitionEnd],
+    reduce ? [0.34, 0.34] : [0.3, 0.48],
+    { ease: circOut }
   );
   const activeStrokeOpacity = useTransform(
     scrollProgress,
-    [inMin, mid, outMax],
-    reduce ? [0, 0, 0] : [0, 0.7, 0],
-    { ease: circInOut }
+    reduce ? [0, 1] : [highlightStart, start, highlightEnd],
+    reduce ? [0, 0] : [0, 0.55, 0],
+    { ease: circOut }
   );
   const pinOpacity = useTransform(
     scrollProgress,
-    [inMin, mid, outMax],
-    reduce ? [0, 0, 0] : [0, 0.8, 0],
-    { ease: circInOut }
+    reduce ? [0, 1] : [highlightStart, start, highlightEnd],
+    reduce ? [0, 0] : [0, 0.62, 0],
+    { ease: circOut }
   );
   const pinRadius = useTransform(
     scrollProgress,
-    [inMin, mid, outMax],
-    reduce ? [3.5, 3.5, 3.5] : [3.5, 4.5, 3.5],
-    { ease: circInOut }
+    reduce ? [0, 1] : [highlightStart, start, highlightEnd],
+    reduce ? [3.5, 3.5] : [3.5, 4.5, 3.5],
+    { ease: circOut }
   );
 
   return (
