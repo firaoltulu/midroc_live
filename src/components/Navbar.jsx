@@ -319,7 +319,7 @@ export default function Navbar() {
             Partner with us <ArrowUpRight size={16} />
           </Link>
 
-          <button
+          {/* <button
             type="button"
             className="nav__burger"
             onClick={toggleTheme}
@@ -328,7 +328,7 @@ export default function Navbar() {
             title={isLight ? 'Switch to dark theme' : 'Switch to light theme'}
           >
             {isLight ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
+          </button> */}
 
           <button
             type="button"
@@ -346,8 +346,7 @@ export default function Navbar() {
         <div className="drawer" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="drawer__top">
             <Link to="/" className="nav__brand" onClick={() => setOpen(false)}>
-              <span className="nav__brand-mark">M</span>
-              <span>Midroc</span>
+              <img src="/midroc.png" alt="Midroc Investment Group" draggable="false" />
             </Link>
             <button
               type="button"
@@ -391,6 +390,7 @@ export default function Navbar() {
                 {SECTORS.map((sector) => {
                   const companies = COMPANIES[sector.key] || [];
                   if (!companies.length) return null;
+                  const SectorIcon = sector.icon;
 
                   return (
                     <div className="drawer__companies-sector" key={sector.key}>
@@ -402,7 +402,16 @@ export default function Navbar() {
                           activeSector === sector.key ? '' : sector.key
                         )}
                       >
-                        {sector.name}
+                        <span className="drawer__companies-sector-label">
+                          <span
+                            className="drawer__companies-sector-icon"
+                            style={{ '--sector-accent': sector.accent }}
+                            aria-hidden="true"
+                          >
+                            <SectorIcon size={18} />
+                          </span>
+                          <span>{sector.name}</span>
+                        </span>
                         <ChevronDown
                           size={18}
                           className={activeSector === sector.key ? 'is-open' : ''}
