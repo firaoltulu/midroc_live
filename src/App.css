@@ -133,9 +133,11 @@
   gap: clamp(2px, 0.6vw, 10px);
   padding: 7px 10px;
   border-radius: 14px;
-  background:
+  --companies-menu-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
     rgba(255, 255, 255, 0.2);
+  background:
+    var(--companies-menu-bg);
   backdrop-filter: blur(16px) saturate(120%);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   border: 1px solid rgba(255, 255, 255, 0.62);
@@ -170,7 +172,7 @@
   border-radius: 999px;
   background: var(--gold);
 }
-.nav__links > button {
+.nav__links > .nav__theme-button {
   width: 36px;
   height: 36px;
   display: grid;
@@ -181,9 +183,15 @@
   background: rgba(255, 255, 255, 0.48);
   transition: background 0.2s, color 0.2s;
 }
-.nav__links > button:hover {
+.nav__links > .nav__theme-button:hover {
   color: var(--emerald);
   background: rgba(255, 255, 255, 0.86);
+}
+.nav__link.nav__companies-trigger {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
 .nav__link--contact {
   margin-left: 0;
@@ -199,8 +207,10 @@
 }
 
 .nav.is-scrolled .nav__links {
-  background:
+  --companies-menu-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.58));
+  background:
+    var(--companies-menu-bg);
   border-color: rgba(255, 255, 255, 0.72);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
@@ -217,9 +227,11 @@
   background: transparent;
 }
 :root:not([data-theme="light"]) .nav.is-scrolled .nav__links {
-  background:
+  --companies-menu-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
     rgba(9, 9, 12, 0.72);
+  background:
+    var(--companies-menu-bg);
   border-color: rgba(255, 255, 255, 0.10);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
@@ -259,6 +271,7 @@
   z-index: 60;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   background: var(--drawer-bg);
   backdrop-filter: blur(24px) saturate(140%);
   padding: 24px;
@@ -269,13 +282,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 48px;
+  flex: 0 0 auto;
+  margin-bottom: 24px;
 }
 .drawer__links {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
+  flex: 0 0 auto;
+  min-height: 0;
 }
 .drawer__link {
   font-family: var(--font-serif);
@@ -326,6 +341,176 @@
   background: rgba(201, 161, 74, 0.10);
   border: 1px solid rgba(201, 161, 74, 0.30);
 }
+
+.drawer__companies-trigger {
+  width: 100%;
+  border-inline: 0;
+  border-top: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-serif);
+}
+
+.nav__companies {
+  position: relative;
+}
+.nav__companies-trigger {
+  gap: 4px;
+}
+.nav__companies-trigger svg,
+.drawer__companies-trigger svg {
+  transition: transform 180ms ease;
+}
+.nav__companies-trigger svg.is-open,
+.drawer__companies-trigger svg.is-open {
+  transform: rotate(180deg);
+}
+.nav__companies-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: rgba(247, 245, 239, 0.96);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: 0 18px 50px rgba(7, 33, 26, 0.22);
+}
+:root:not([data-theme="light"]) .nav__companies-menu {
+  background: rgba(12, 12, 16, 0.96);
+}
+.nav__companies-sectors {
+  background: transparent;
+  padding: 10px;
+  border-radius: 15px 0 0 15px;
+  border-right: 1px solid var(--line);
+}
+.nav__companies-sector-title {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--ink-0);
+  text-align: left;
+  cursor: pointer;
+}
+.nav__companies-sector-title span { flex: 1; }
+.nav__companies-sector-title svg:last-child {
+  transform: rotate(-90deg);
+  opacity: 0.55;
+}
+.nav__companies-sector-title.is-active {
+  background: var(--tint-strong);
+  color: var(--gold-300);
+}
+.nav__companies-companies {
+  background: transparent;
+  padding: 10px;
+  border-radius: 0 15px 15px 0;
+}
+.nav__companies-sector-link {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--gold-300);
+}
+.nav__companies-company {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--ink-1);
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+.nav__companies-company svg {
+  flex: 0 0 auto;
+  color: var(--gold-300);
+}
+.nav__companies-company:hover,
+.nav__companies-sector-title:hover {
+  background: var(--tint);
+  color: var(--ink-0);
+}
+
+.drawer__companies-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: -4px 0 12px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--drawer-bg);
+}
+.drawer__companies-sector {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--drawer-bg);
+}
+.drawer__companies-sector-title {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  border-top: 0;
+  border-inline: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold-300);
+  cursor: pointer;
+  text-align: left;
+}
+.drawer__companies-sector-title svg {
+  transition: transform 180ms ease;
+}
+.drawer__companies-sector-title svg.is-open {
+  transform: rotate(180deg);
+}
+.drawer__companies-company {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--ink-1);
+}
+.drawer__companies-company:last-child { border-bottom: 0; }
+.drawer__companies-company svg { flex: 0 0 auto; color: var(--gold-300); }
 
 /* ---------- HERO (HOME) ---------- */
 .home-root {

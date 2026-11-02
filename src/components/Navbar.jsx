@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { Menu, X, ArrowUpRight, Sun, Moon } from 'lucide-react';
-import { NAV_LINKS } from '../data';
+import { Menu, X, ArrowUpRight, Sun, Moon, ChevronDown } from 'lucide-react';
+import { COMPANIES, NAV_LINKS, SECTORS } from '../data';
 import { useTheme } from '../theme';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [companiesOpen, setCompaniesOpen] = useState(false);
+  const [activeSector, setActiveSector] = useState(SECTORS[0]?.key || '');
   const [measured, setMeasured] = useState(false);
   const [logoTransform, setLogoTransform] = useState('translate3d(0, 0, 0) scale(1)');
   const location = useLocation();
@@ -19,6 +21,17 @@ export default function Navbar() {
   const transformsRef = useRef({ start: null, end: null });
   const frameRef = useRef(null);
   const transitioningRef = useRef(false);
+  const companiesTriggerRef = useRef(null);
+  const companiesPanelRef = useRef(null);
+
+  const closeCompanies = useCallback(() => {
+    setCompaniesOpen(false);
+    window.requestAnimationFrame(() => companiesTriggerRef.current?.focus());
+  }, []);
+
+  const openCompanies = useCallback(() => {
+    setCompaniesOpen((current) => !current);
+  }, []);
 
   const applyLogoTarget = useCallback((nextDocked) => {
     const transforms = transformsRef.current;
@@ -156,12 +169,36 @@ export default function Navbar() {
 
   useEffect(() => {
     setOpen(false);
+    setCompaniesOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
+
+  useEffect(() => {
+    if (!companiesOpen) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeCompanies();
+    };
+    const onPointerDown = (event) => {
+      if (!window.matchMedia('(min-width: 900px)').matches) return;
+      if (
+        !companiesPanelRef.current?.contains(event.target) &&
+        !companiesTriggerRef.current?.contains(event.target)
+      ) {
+        setCompaniesOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [companiesOpen, closeCompanies]);
 
   return (
     <>
@@ -199,9 +236,75 @@ export default function Navbar() {
                 {l.label}
               </NavLink>
             ))}
+            <div className="nav__companies">
+              <button
+                ref={companiesTriggerRef}
+                type="button"
+                className="nav__link nav__companies-trigger"
+                aria-haspopup="menu"
+                aria-expanded={companiesOpen}
+                onClick={openCompanies}
+              >
+                Companies
+                <ChevronDown size={14} className={companiesOpen ? 'is-open' : ''} />
+              </button>
+              {companiesOpen && (
+                <div ref={companiesPanelRef} className="nav__companies-menu" role="menu">
+                  <div className="nav__companies-sectors">
+                    {SECTORS.map((sector) => {
+                      const companies = COMPANIES[sector.key] || [];
+                      if (!companies.length) return null;
+                      const SectorIcon = sector.icon;
+
+                      return (
+                        <button
+                          key={sector.key}
+                          type="button"
+                          className={`nav__companies-sector-title ${activeSector === sector.key ? 'is-active' : ''}`}
+                          role="menuitem"
+                          onMouseEnter={() => setActiveSector(sector.key)}
+                          onFocus={() => setActiveSector(sector.key)}
+                          onClick={() => setActiveSector(sector.key)}
+                        >
+                          <SectorIcon size={16} style={{ color: sector.accent }} />
+                          <span>{sector.name}</span>
+                          <ChevronDown size={14} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="nav__companies-companies">
+                    {SECTORS.filter((sector) => sector.key === activeSector).map((sector) => (
+                      <div key={sector.key}>
+                        <Link
+                          to={`/clusters/${sector.key}`}
+                          className="nav__companies-sector-link"
+                          onClick={() => setCompaniesOpen(false)}
+                        >
+                          View {sector.name} sector
+                          <ArrowUpRight size={14} />
+                        </Link>
+                        {(COMPANIES[sector.key] || []).map((company) => (
+                          <Link
+                            key={company.id}
+                            to={`/clusters/${sector.key}/companies/${company.id}`}
+                            className="nav__companies-company"
+                            role="menuitem"
+                            onClick={() => setCompaniesOpen(false)}
+                          >
+                            <span>{company.name}</span>
+                            <ArrowUpRight size={14} />
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               type="button"
-              // className="nav__burger"
+              className="nav__theme-button"
               onClick={toggleTheme}
               aria-label={isLight ? 'Switch to dark theme' : 'Switch to light theme'}
               aria-pressed={isLight}
@@ -270,6 +373,64 @@ export default function Navbar() {
                 <ArrowUpRight size={20} />
               </NavLink>
             ))}
+            <button
+              type="button"
+              className="drawer__link drawer__companies-trigger"
+              aria-haspopup="menu"
+              aria-expanded={companiesOpen}
+              onClick={openCompanies}
+            >
+              <span>Companies</span>
+              <ChevronDown
+                size={20}
+                className={companiesOpen ? 'is-open' : ''}
+              />
+            </button>
+            {companiesOpen && (
+              <div className="drawer__companies-menu">
+                {SECTORS.map((sector) => {
+                  const companies = COMPANIES[sector.key] || [];
+                  if (!companies.length) return null;
+
+                  return (
+                    <div className="drawer__companies-sector" key={sector.key}>
+                      <button
+                        type="button"
+                        className="drawer__companies-sector-title"
+                        aria-expanded={activeSector === sector.key}
+                        onClick={() => setActiveSector(
+                          activeSector === sector.key ? '' : sector.key
+                        )}
+                      >
+                        {sector.name}
+                        <ChevronDown
+                          size={18}
+                          className={activeSector === sector.key ? 'is-open' : ''}
+                        />
+                      </button>
+                      {activeSector === sector.key && (
+                        <div className="drawer__companies-list">
+                          {companies.map((company) => (
+                            <Link
+                              key={company.id}
+                              to={`/clusters/${sector.key}/companies/${company.id}`}
+                              className="drawer__companies-company"
+                              onClick={() => {
+                                setCompaniesOpen(false);
+                                setOpen(false);
+                              }}
+                            >
+                              <span>{company.name}</span>
+                              <ArrowUpRight size={16} />
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="drawer__footer">
@@ -299,6 +460,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
     </>
   );
 }
