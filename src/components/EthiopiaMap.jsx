@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { circOut, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { feature } from 'topojson-client';
 import { geoContains, geoMercator, geoPath } from 'd3-geo';
 import rawTopo from '../data/ethiopia-regions.json';
@@ -119,21 +119,21 @@ function readVar(name, fallback) {
 export default function EthiopiaMap({ scrollProgress, inSection = false }) {
   const reduceMotion = useReducedMotion();
   const smoothedProgress = useSpring(scrollProgress, {
-    stiffness: 180,
-    damping: 30,
-    mass: 0.18,
-    restDelta: 0.001,
+    stiffness: 90,
+    damping: 24,
+    mass: 0.35,
+    restDelta: 0.0005,
   });
   const mapProgress = reduceMotion ? scrollProgress : smoothedProgress;
-  const baseFill = useMotionValue(readVar('--green-700', '#23572c'));
-  const litFill = useMotionValue(readVar('--gold-300', '#e6c878'));
+  const baseFill = useMotionValue('#123d2a');
+  const litFill = useMotionValue('#2f7d4a');
   const strokeColor = useMotionValue(readVar('--line-strong', 'rgba(255,255,255,0.16)'));
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const sync = () => {
-      baseFill.set(readVar('--green-700', '#23572c'));
-      litFill.set(readVar('--gold-300', '#e6c878'));
+      baseFill.set('#123d2a');
+      litFill.set('#2f7d4a');
       strokeColor.set(readVar('--line-strong', 'rgba(255,255,255,0.16)'));
     };
     const obs = new MutationObserver(sync);
@@ -229,46 +229,40 @@ export default function EthiopiaMap({ scrollProgress, inSection = false }) {
 function RegionPath({ d, pins, name, index, total, scrollProgress, baseFill, litFill, strokeColor }) {
   const reduce = useReducedMotion();
   const start = total === 1 ? 0.5 : 0.04 + (index / Math.max(1, total - 1)) * 0.92;
-  const transitionStart = Math.max(0, start - 0.11);
-  const transitionEnd = Math.min(1, start + 0.11);
-  const highlightStart = Math.max(0, start - 0.02);
-  const highlightEnd = Math.min(1, start + 0.055);
+  const transitionStart = Math.max(0, start - 0.14);
+  const transitionEnd = Math.min(1, start + 0.14);
+  const highlightStart = Math.max(0, start - 0.06);
+  const highlightEnd = Math.min(1, start + 0.075);
 
   const fill = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [transitionStart, transitionEnd],
-    reduce ? [litFill, litFill] : [baseFill, litFill],
-    { ease: circOut }
+    reduce ? [litFill, litFill] : [baseFill, litFill]
   );
   const opacity = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [transitionStart, transitionEnd],
-    reduce ? [1, 1] : [0.82, 1],
-    { ease: circOut }
+    reduce ? [1, 1] : [0.82, 1]
   );
   const strokeOpacity = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [transitionStart, transitionEnd],
-    reduce ? [0.34, 0.34] : [0.3, 0.48],
-    { ease: circOut }
+    reduce ? [0.34, 0.34] : [0.3, 0.48]
   );
   const activeStrokeOpacity = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [highlightStart, start, highlightEnd],
-    reduce ? [0, 0] : [0, 0.55, 0],
-    { ease: circOut }
+    reduce ? [0, 0] : [0, 0.55, 0]
   );
   const pinOpacity = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [highlightStart, start, highlightEnd],
-    reduce ? [0, 0] : [0, 0.62, 0],
-    { ease: circOut }
+    reduce ? [0, 0] : [0, 0.62, 0]
   );
   const pinRadius = useTransform(
     scrollProgress,
     reduce ? [0, 1] : [highlightStart, start, highlightEnd],
-    reduce ? [3.5, 3.5] : [3.5, 4.5, 3.5],
-    { ease: circOut }
+    reduce ? [3.5, 3.5] : [3.5, 4.5, 3.5]
   );
 
   return (

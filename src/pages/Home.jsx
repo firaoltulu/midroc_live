@@ -373,8 +373,12 @@ export default function Home() {
         <div className="ethiopia-showcase__sticky">
           <div className="ethiopia-showcase__intro">
             <span className="eyebrow">Across Ethiopia</span>
-            <h2 id="ethiopia-showcase-heading">
-              A footprint <em>that keeps growing.</em>
+            <h2>
+              A footprint
+              {/* <em>that keeps growing.</em> */}
+              <em style={{ color: 'var(--gold-300)', fontStyle: 'italic', fontWeight: 300 }}>
+                that keeps growing.
+              </em>
             </h2>
           </div>
           <div className="ethiopia-showcase__map">
